@@ -1,7 +1,6 @@
 package com.parkit.parkingsystem.util;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -9,7 +8,15 @@ import java.util.Date;
 /**
  * Utility Class to convert Date object
  */
-public class DateConvertUtil {
+public final class DateConvertUtil {
+
+    /**
+     * Private Constructor for Utility Class
+     */
+    private DateConvertUtil()
+    {
+
+    }
 
     /**
      * Convert a Date object into a LocalDateTime Object using the Instant object to convert
