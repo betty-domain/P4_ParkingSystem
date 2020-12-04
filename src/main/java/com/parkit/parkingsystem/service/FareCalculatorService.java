@@ -2,30 +2,55 @@ package com.parkit.parkingsystem.service;
 
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.model.Ticket;
+import com.parkit.parkingsystem.util.DateConvertUtil;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 
 public class FareCalculatorService {
 
-    public void calculateFare(Ticket ticket){
-        if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
-            throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
+    public void calculateFare(Ticket ticket) {
+        if ((ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime()))) {
+            throw new IllegalArgumentException("Out time provided is incorrect:" + ticket.getOutTime().toString());
         }
 
-        int inHour = ticket.getInTime().getHours();
-        int outHour = ticket.getOutTime().getHours();
+        // calculate duration for Current Ticket
+        double hoursBetweenInAndOut = calculateHoursBetweenInAndOut(ticket);
 
-        //TODO: Some tests are failing here. Need to check if this logic is correct
-        int duration = outHour - inHour;
+        setTicketPrice(ticket,hoursBetweenInAndOut);
+    }
 
-        switch (ticket.getParkingSpot().getParkingType()){
+    /**
+     * Calculate duration for current ticket
+     * @param ticket where in and out Date will be used
+     * @return number of hours with decimal format between in and out date of ticket
+     */
+    private double calculateHoursBetweenInAndOut(Ticket ticket) {
+        LocalDateTime inLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getInTime());
+        LocalDateTime outLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getOutTime());
+        Duration durationBetweenInAndOut = Duration.between(inLocalDatTime, outLocalDatTime);
+        return DateConvertUtil.getDecimalHoursFromDuration(durationBetweenInAndOut);
+    }
+
+    /**
+     * Set price ticket with ticket and number of hours of parking
+     * @param ticket to complete with price
+     * @param hoursOfParking number of hours of parking
+     */
+    private void setTicketPrice(Ticket ticket, double hoursOfParking)
+    {
+        switch (ticket.getParkingSpot().getParkingType()) {
             case CAR: {
-                ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);
+                ticket.setPrice(hoursOfParking * Fare.CAR_RATE_PER_HOUR);
                 break;
             }
             case BIKE: {
-                ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);
+                ticket.setPrice(hoursOfParking * Fare.BIKE_RATE_PER_HOUR);
                 break;
             }
-            default: throw new IllegalArgumentException("Unkown Parking Type");
+            default:
+                throw new IllegalArgumentException("Unkown Parking Type");
         }
     }
 }
