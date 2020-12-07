@@ -12,7 +12,7 @@ public class FareCalculatorService {
 
     public void calculateFare(Ticket ticket) {
         if ((ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime()))) {
-            throw new IllegalArgumentException("Out time provided is incorrect:" + ticket.getOutTime().toString());
+            throw new IllegalArgumentException("Out time provided is null or incorrect");
         }
 
         // calculate duration for Current Ticket
@@ -27,6 +27,7 @@ public class FareCalculatorService {
      * @return number of hours with decimal format between in and out date of ticket
      */
     private double calculateHoursBetweenInAndOut(Ticket ticket) {
+
         LocalDateTime inLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getInTime());
         LocalDateTime outLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getOutTime());
         Duration durationBetweenInAndOut = Duration.between(inLocalDatTime, outLocalDatTime);
@@ -50,7 +51,7 @@ public class FareCalculatorService {
                 break;
             }
             default:
-                throw new IllegalArgumentException("Unkown Parking Type");
+                throw new IllegalArgumentException("Unknown Parking Type");
         }
     }
 }
