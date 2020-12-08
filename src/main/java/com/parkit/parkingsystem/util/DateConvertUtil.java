@@ -6,7 +6,7 @@ import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * Utility Class to convert Date object
+ * Utility Class to work with Date object
  */
 public final class DateConvertUtil {
 
@@ -30,11 +30,27 @@ public final class DateConvertUtil {
                 .toLocalDateTime();
     }
 
+    /**
+     * Convert a LocalDateTime object into a Date Object using the Instant object to convert
+     * @param localDateTimeToConvert LocalDateTime to convert
+     * @return Converted LocalDateTime into Date
+     */
+    public static Date convertToDate(LocalDateTime localDateTimeToConvert)
+    {
+        return Date.from(localDateTimeToConvert.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    /**
+     * Calculate number of hours on a Duration Object, returns decimal result (ex : 0,5 for 30 minutes, 2.25 for 2h15 minutes)
+     * @param duration duration objecton which calculate the number of hours
+     * @return number of hours in a decimal format (ex : 0,5 for 30 minutes, 2.25 for 2h15 minutes)
+     */
     public static double getDecimalHoursFromDuration(Duration duration)
     {
         long minutes = duration.toMinutes();
-        double partOfHours = minutes / 60.0;
+        double partOfHours = (double)minutes / 60.0;
 
         return partOfHours;
     }
+
 }

@@ -1,56 +1,107 @@
 package com.parkit.parkingsystem.service;
 
 import com.parkit.parkingsystem.constants.Fare;
+import com.parkit.parkingsystem.constants.ParkingType;
+import com.parkit.parkingsystem.dao.TicketDAO;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.util.DateConvertUtil;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-
+import java.util.List;
 
 public class FareCalculatorService {
 
+    private final TicketDAO ticketDAO;
+    public FareCalculatorService(TicketDAO ticketDAO)
+    {
+        this.ticketDAO = ticketDAO;
+    }
+    /**
+     * Calculate Fare for given ticket
+     * @param ticket ticket to use to calculate fare
+     */
     public void calculateFare(Ticket ticket) {
         if ((ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime()))) {
-            throw new IllegalArgumentException("Out time provided is incorrect:" + ticket.getOutTime().toString());
+            throw new IllegalArgumentException("Out time provided is null or incorrect");
         }
 
-        // calculate duration for Current Ticket
-        double hoursBetweenInAndOut = calculateHoursBetweenInAndOut(ticket);
-
-        setTicketPrice(ticket,hoursBetweenInAndOut);
-    }
-
-    /**
-     * Calculate duration for current ticket
-     * @param ticket where in and out Date will be used
-     * @return number of hours with decimal format between in and out date of ticket
-     */
-    private double calculateHoursBetweenInAndOut(Ticket ticket) {
         LocalDateTime inLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getInTime());
         LocalDateTime outLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getOutTime());
         Duration durationBetweenInAndOut = Duration.between(inLocalDatTime, outLocalDatTime);
-        return DateConvertUtil.getDecimalHoursFromDuration(durationBetweenInAndOut);
+
+        //calculate and affect ticket price
+        ticket.setPrice(getTicketPrice(ticket.getParkingSpot().getParkingType(), durationBetweenInAndOut ));
+
+        //test if ticket is eligible to discount
+        if (isEligibleToDiscount(ticket))
+        {
+            ticket.setPrice(getDiscountPrice(ticket.getPrice()));
+        }
+
+    }
+
+
+
+    /**
+     * Get price ticket relative to ParkingType and number of hours of parking
+     * @param parkingType type of parking
+     * @param parkingDuration parking duration representation
+     */
+    private double getTicketPrice(ParkingType parkingType, Duration parkingDuration)
+    {
+        if (!isFreeParking(parkingDuration)) {
+            double nbHoursParkingDuration = DateConvertUtil.getDecimalHoursFromDuration(parkingDuration);
+            switch (parkingType) {
+                case CAR:
+                    return nbHoursParkingDuration * Fare.CAR_RATE_PER_HOUR;
+
+                case BIKE:
+                    return nbHoursParkingDuration * Fare.BIKE_RATE_PER_HOUR;
+
+                default:
+                    throw new IllegalArgumentException("Unknown Parking Type");
+            }
+        }
+        else
+        {
+            return 0.0;
+        }
     }
 
     /**
-     * Set price ticket with ticket and number of hours of parking
-     * @param ticket to complete with price
-     * @param hoursOfParking number of hours of parking
+     * Check if parking is free relative to parking duration in decimal hours
+     * @param duration parking duration object
+     * @return true if parking can be free, false otherwise
      */
-    private void setTicketPrice(Ticket ticket, double hoursOfParking)
+    private boolean isFreeParking(Duration duration)
     {
-        switch (ticket.getParkingSpot().getParkingType()) {
-            case CAR: {
-                ticket.setPrice(hoursOfParking * Fare.CAR_RATE_PER_HOUR);
-                break;
-            }
-            case BIKE: {
-                ticket.setPrice(hoursOfParking * Fare.BIKE_RATE_PER_HOUR);
-                break;
-            }
-            default:
-                throw new IllegalArgumentException("Unkown Parking Type");
+        return duration.toMinutes()<Fare.NB_MINUTES_BEFORE_PAID_PARKING;
+    }
+
+    /**
+     * Search and Apply discount
+     * @param ticket ticket applying for discount
+     * @return true if ticket is eligible to discount
+     */
+    public boolean isEligibleToDiscount(Ticket ticket)
+    {
+        if (ticket.getVehicleRegNumber()!=null) {
+            List<Ticket> previousPaidTickets = ticketDAO.getPaidTickets(ticket.getVehicleRegNumber());
+            return !previousPaidTickets.isEmpty();
         }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * Calculate Discount Price
+     * @param price price on which apply discount
+     * @return
+     */
+    private double getDiscountPrice(double price) {
+        return price * (100.0 - Fare.DISCOUNT_PERCENTAGE_FOR_REGULAR_USER) / 100.0;
     }
 }

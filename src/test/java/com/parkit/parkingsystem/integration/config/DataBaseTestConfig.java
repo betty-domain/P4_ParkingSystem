@@ -16,7 +16,7 @@ public class DataBaseTestConfig extends DataBaseConfig {
         return DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/test","root","rootroot");
     }
-
+/*
     public void closeConnection(Connection con){
         if(con!=null){
             try {
@@ -48,5 +48,5 @@ public class DataBaseTestConfig extends DataBaseConfig {
                 logger.error("Error while closing result set",e);
             }
         }
-    }
+    }*/
 }
