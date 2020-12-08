@@ -1,6 +1,7 @@
 package com.parkit.parkingsystem.service;
 
 import com.parkit.parkingsystem.constants.Fare;
+import com.parkit.parkingsystem.constants.ParkingType;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.util.DateConvertUtil;
 
@@ -10,6 +11,10 @@ import java.time.LocalDateTime;
 
 public class FareCalculatorService {
 
+    /**
+     * Calculate Fare for given ticket
+     * @param ticket ticket to use to calculate fare
+     */
     public void calculateFare(Ticket ticket) {
         if ((ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime()))) {
             throw new IllegalArgumentException("Out time provided is null or incorrect");
@@ -18,7 +23,8 @@ public class FareCalculatorService {
         // calculate duration for Current Ticket
         double hoursBetweenInAndOut = calculateHoursBetweenInAndOut(ticket);
 
-        setTicketPrice(ticket,hoursBetweenInAndOut);
+        //apply price rules
+        ticket.setPrice(getTicketPrice(ticket.getParkingSpot().getParkingType(),hoursBetweenInAndOut));
     }
 
     /**
@@ -35,34 +41,37 @@ public class FareCalculatorService {
     }
 
     /**
-     * Set price ticket with ticket and number of hours of parking
-     * @param ticket to complete with price
-     * @param hoursOfParking number of hours of parking
+     * Get price ticket relative to ParkingType and number of hours of parking
+     * @param parkingType type of parking
+     * @param hoursOfParking number of hours of parking (in decimal format ex : 1.5 for 1h30 minutes)
      */
-    private void setTicketPrice(Ticket ticket, double hoursOfParking)
+    private double getTicketPrice(ParkingType parkingType, double hoursOfParking)
     {
         if (!isFreeParking(hoursOfParking)) {
-            switch (ticket.getParkingSpot().getParkingType()) {
-                case CAR: {
-                    ticket.setPrice(hoursOfParking * Fare.CAR_RATE_PER_HOUR);
-                    break;
-                }
-                case BIKE: {
-                    ticket.setPrice(hoursOfParking * Fare.BIKE_RATE_PER_HOUR);
-                    break;
-                }
+            switch (parkingType) {
+                case CAR:
+                    return hoursOfParking * Fare.CAR_RATE_PER_HOUR;
+
+                case BIKE:
+                    return hoursOfParking * Fare.BIKE_RATE_PER_HOUR;
+
                 default:
                     throw new IllegalArgumentException("Unknown Parking Type");
             }
         }
         else
         {
-            ticket.setPrice(0.0);
+            return 0.0;
         }
     }
 
+    /**
+     * Check if parking is free relative to parking duration in decimal hours
+     * @param hoursOfParking number of hours of parking (in decimal format ex : 1.5 for 1h30 minutes)
+     * @return true if parking can be free, false otherwise
+     */
     private boolean isFreeParking(double hoursOfParking)
     {
-        return hoursOfParking<0.5;
+        return hoursOfParking<Fare.NB_HOURS_BEFORE_PAID_PARKING;
     }
 }
