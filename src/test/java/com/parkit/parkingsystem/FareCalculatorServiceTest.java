@@ -10,31 +10,35 @@ import com.parkit.parkingsystem.util.DateConvertUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+@ExtendWith(MockitoExtension.class)
 public class FareCalculatorServiceTest {
 
     private static FareCalculatorService fareCalculatorService;
     private Ticket ticket;
 
     @Mock
-    private TicketDAO ticketDAO;
+    private static TicketDAO ticketDAOMock;
 
     @BeforeAll
     private static void setUp() {
-        fareCalculatorService = new FareCalculatorService();
+
     }
 
     @BeforeEach
     private void setUpPerTest() {
+        fareCalculatorService = new FareCalculatorService(ticketDAOMock);
         ticket = new Ticket();
     }
 
@@ -226,14 +230,14 @@ public class FareCalculatorServiceTest {
         lstPreviousTickets.add(firstTicket);
 
         //mock getPaidTickets (free tickets are excluded of discount)
-        when (ticketDAO.getPaidTickets(vehicleRegistrationNumber)).thenReturn(lstPreviousTickets);
+        when (ticketDAOMock.getPaidTickets(vehicleRegistrationNumber)).thenReturn(lstPreviousTickets);
 
         Ticket secondTicket = new Ticket();
         secondTicket.setVehicleRegNumber(vehicleRegistrationNumber);
-        long hoursParkingDuration = 3;
+        double hoursParkingDuration = 3.0;
 
         inLocalDateTime = LocalDateTime.of(2020,5,15,15,0,0);
-        outLocalDateTime = inLocalDateTime.plusHours(hoursParkingDuration);
+        outLocalDateTime = inLocalDateTime.plusHours((long)hoursParkingDuration);
         secondTicket.setInTime(DateConvertUtil.convertToDate(inLocalDateTime));
         secondTicket.setOutTime(DateConvertUtil.convertToDate(outLocalDateTime));
 
@@ -242,7 +246,10 @@ public class FareCalculatorServiceTest {
 
         fareCalculatorService.calculateFare(secondTicket);
 
-        assertEquals(Fare.DISCOUNT_PERCENT_FOR_REGULAR_USER * Fare.CAR_RATE_PER_HOUR * hoursParkingDuration, secondTicket.getPrice());
+        double calculatedPrice = (Fare.CAR_RATE_PER_HOUR * hoursParkingDuration) * (100.0-Fare.DISCOUNT_PERCENTAGE_FOR_REGULAR_USER)/100.0;
+
+        assertEquals(calculatedPrice, secondTicket.getPrice());
+
     }
 
     @Test
@@ -263,14 +270,14 @@ public class FareCalculatorServiceTest {
         lstPreviousTickets.add(firstTicket);
 
         //mock getPaidTickets (free tickets are excluded of discount)
-        when (ticketDAO.getPaidTickets(vehicleRegistrationNumber)).thenReturn(lstPreviousTickets);
+        when (ticketDAOMock.getPaidTickets(vehicleRegistrationNumber)).thenReturn(lstPreviousTickets);
 
         Ticket secondTicket = new Ticket();
         secondTicket.setVehicleRegNumber(vehicleRegistrationNumber);
-        long hoursParkingDuration = 3;
+        double hoursParkingDuration = 3.0;
 
         inLocalDateTime = LocalDateTime.of(2020,5,15,15,0,0);
-        outLocalDateTime = inLocalDateTime.plusHours(hoursParkingDuration);
+        outLocalDateTime = inLocalDateTime.plusHours((long)hoursParkingDuration);
         secondTicket.setInTime(DateConvertUtil.convertToDate(inLocalDateTime));
         secondTicket.setOutTime(DateConvertUtil.convertToDate(outLocalDateTime));
 
@@ -279,7 +286,9 @@ public class FareCalculatorServiceTest {
 
         fareCalculatorService.calculateFare(secondTicket);
 
-        assertEquals(Fare.DISCOUNT_PERCENT_FOR_REGULAR_USER * Fare.BIKE_RATE_PER_HOUR * hoursParkingDuration, secondTicket.getPrice());
+        double calculatedPrice = (Fare.BIKE_RATE_PER_HOUR * hoursParkingDuration) * (100.0-Fare.DISCOUNT_PERCENTAGE_FOR_REGULAR_USER)/100.0;
+
+        assertEquals(calculatedPrice, secondTicket.getPrice());
     }
 
 }

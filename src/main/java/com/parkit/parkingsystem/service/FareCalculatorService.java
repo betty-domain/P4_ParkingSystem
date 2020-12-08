@@ -2,15 +2,21 @@ package com.parkit.parkingsystem.service;
 
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.constants.ParkingType;
+import com.parkit.parkingsystem.dao.TicketDAO;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.util.DateConvertUtil;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-
+import java.util.List;
 
 public class FareCalculatorService {
 
+    private final TicketDAO ticketDAO;
+    public FareCalculatorService(TicketDAO ticketDAO)
+    {
+        this.ticketDAO = ticketDAO;
+    }
     /**
      * Calculate Fare for given ticket
      * @param ticket ticket to use to calculate fare
@@ -26,7 +32,16 @@ public class FareCalculatorService {
 
         //calculate and affect ticket price
         ticket.setPrice(getTicketPrice(ticket.getParkingSpot().getParkingType(), durationBetweenInAndOut ));
+
+        //test if ticket is eligible to discount
+        if (isEligibleToDiscount(ticket))
+        {
+            ticket.setPrice(getDiscountPrice(ticket.getPrice()));
+        }
+
     }
+
+
 
     /**
      * Get price ticket relative to ParkingType and number of hours of parking
@@ -62,5 +77,31 @@ public class FareCalculatorService {
     private boolean isFreeParking(Duration duration)
     {
         return duration.toMinutes()<Fare.NB_MINUTES_BEFORE_PAID_PARKING;
+    }
+
+    /**
+     * Search and Apply discount
+     * @param ticket ticket applying for discount
+     * @return true if ticket is eligible to discount
+     */
+    public boolean isEligibleToDiscount(Ticket ticket)
+    {
+        if (ticket.getVehicleRegNumber()!=null) {
+            List<Ticket> previousPaidTickets = ticketDAO.getPaidTickets(ticket.getVehicleRegNumber());
+            return !previousPaidTickets.isEmpty();
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    /**
+     * Calculate Discount Price
+     * @param price price on which apply discount
+     * @return
+     */
+    private double getDiscountPrice(double price) {
+        return price * (100.0 - Fare.DISCOUNT_PERCENTAGE_FOR_REGULAR_USER) / 100.0;
     }
 }

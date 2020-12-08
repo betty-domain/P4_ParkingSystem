@@ -1,6 +1,7 @@
 package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.constants.ParkingType;
+import com.parkit.parkingsystem.dao.TicketDAO;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.FareCalculatorService;
@@ -32,13 +33,11 @@ public class FareCalculatorServicePowerMockTest {
         PowerMockito.mockStatic(ParkingType.class);
         PowerMockito.when(ParkingType.values()).thenReturn(new ParkingType[]{ParkingType.CAR, ParkingType.BIKE, parkingTypeUnknown});
 
-        FareCalculatorService fareCalculatorService = new  FareCalculatorService();
-
+        TicketDAO ticketDAO = new TicketDAO();
+        FareCalculatorService fareCalculatorService = new  FareCalculatorService(ticketDAO);
 
         LocalDateTime inDateTime = LocalDateTime.of(2020,1,1,12,0,0);
         LocalDateTime outDateTime = inDateTime.plusHours(1);
-
-
 
         ParkingSpot parkingSpot = new ParkingSpot(1, parkingTypeUnknown,false);
         Ticket ticket = new Ticket();

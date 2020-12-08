@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,7 +58,7 @@ public class ParkingDataBaseIT {
 
     @BeforeEach
     private void setUpPerTest() throws Exception {
-        when(inputReaderUtilMock.readSelection()).thenReturn(ParkingType.CAR.ordinal());
+        when(inputReaderUtilMock.readSelection()).thenReturn(1);
         when(inputReaderUtilMock.readVehicleRegistrationNumber()).thenReturn(vehicleRegistrationNumber);
         dataBasePrepareService.clearDataBaseEntries();
 
@@ -103,7 +104,7 @@ public class ParkingDataBaseIT {
         when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
         parkingService.processExitingVehicle();
 
-        Ticket registeredTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
+        Ticket registeredTicket = ticketDAO.getPaidTickets(vehicleRegistrationNumber).get(0);
         int availableSpot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
         //TODO : à revoir car plusieurs asserts sur cette méthode
@@ -138,18 +139,17 @@ public class ParkingDataBaseIT {
         when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
         parkingService.processExitingVehicle();
 
-        Ticket firstTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
-
         //registering second ticket
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime));
+        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime.plusMonths(1)));
         parkingService.processIncomingVehicle();
 
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
+        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime.plusMonths(1)));
         parkingService.processExitingVehicle();
 
-        Ticket secondTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
+        List<Ticket> listTickets = ticketDAO.getPaidTickets(vehicleRegistrationNumber);
 
-        assertTrue(secondTicket.getPrice()<firstTicket.getPrice());
+        //first ticket must be more expensive than second one because of the applied discount
+        assertTrue(listTickets.get(0).getPrice()>listTickets.get(1).getPrice());
     }
 
 }
