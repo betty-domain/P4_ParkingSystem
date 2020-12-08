@@ -41,17 +41,28 @@ public class FareCalculatorService {
      */
     private void setTicketPrice(Ticket ticket, double hoursOfParking)
     {
-        switch (ticket.getParkingSpot().getParkingType()) {
-            case CAR: {
-                ticket.setPrice(hoursOfParking * Fare.CAR_RATE_PER_HOUR);
-                break;
+        if (!isFreeParking(hoursOfParking)) {
+            switch (ticket.getParkingSpot().getParkingType()) {
+                case CAR: {
+                    ticket.setPrice(hoursOfParking * Fare.CAR_RATE_PER_HOUR);
+                    break;
+                }
+                case BIKE: {
+                    ticket.setPrice(hoursOfParking * Fare.BIKE_RATE_PER_HOUR);
+                    break;
+                }
+                default:
+                    throw new IllegalArgumentException("Unknown Parking Type");
             }
-            case BIKE: {
-                ticket.setPrice(hoursOfParking * Fare.BIKE_RATE_PER_HOUR);
-                break;
-            }
-            default:
-                throw new IllegalArgumentException("Unknown Parking Type");
         }
+        else
+        {
+            ticket.setPrice(0.0);
+        }
+    }
+
+    private boolean isFreeParking(double hoursOfParking)
+    {
+        return hoursOfParking<0.5;
     }
 }
