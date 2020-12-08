@@ -12,6 +12,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TicketDAO {
 
@@ -84,5 +86,14 @@ public class TicketDAO {
             dataBaseConfig.closeConnection(con);
         }
         return false;
+    }
+
+    /**
+     * Collect all Paid tickets for a vehicleRegistrationNumber
+     * @param vehicleRegistrationNumber found vehicle registration number
+     * @return List of paid tickets relative to vehicle registration number
+     */
+    public List<Ticket> getPaidTickets(String vehicleRegistrationNumber) {
+        return new ArrayList<Ticket>();
     }
 }

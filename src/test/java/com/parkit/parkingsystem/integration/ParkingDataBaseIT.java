@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDateTime;
 import java.util.Date;
 
@@ -58,7 +57,7 @@ public class ParkingDataBaseIT {
 
     @BeforeEach
     private void setUpPerTest() throws Exception {
-        when(inputReaderUtilMock.readSelection()).thenReturn(1);
+        when(inputReaderUtilMock.readSelection()).thenReturn(ParkingType.CAR.ordinal());
         when(inputReaderUtilMock.readVehicleRegistrationNumber()).thenReturn(vehicleRegistrationNumber);
         dataBasePrepareService.clearDataBaseEntries();
 
@@ -102,7 +101,6 @@ public class ParkingDataBaseIT {
         parkingService.processIncomingVehicle();
 
         when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
-        parkingService = new ParkingService(inputReaderUtilMock, parkingSpotDAO, ticketDAO, clockUtilMock);
         parkingService.processExitingVehicle();
 
         Ticket registeredTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
@@ -112,6 +110,46 @@ public class ParkingDataBaseIT {
         assertEquals(initialAvailableSpot, availableSpot);
         assertEquals(Fare.CAR_RATE_PER_HOUR * hoursOfParking,registeredTicket.getPrice());
         assertEquals(DateConvertUtil.convertToDate(exitDateTime), registeredTicket.getOutTime());
+    }
+
+    @Test
+    public void testNextAvailableParkingSlot()
+    {
+        ParkingSpot firstParkingSpot = parkingService.getNextParkingNumberIfAvailable();
+        parkingService.processIncomingVehicle();
+
+        ParkingSpot secondParkingSpot = parkingService.getNextParkingNumberIfAvailable();
+
+        assertNotEquals(firstParkingSpot,secondParkingSpot);
+
+    }
+
+    @Test
+    public void testParkingRecurrentCar(){
+
+        LocalDateTime entryDateTime = LocalDateTime.of(2020,1,1,10,10,10);
+        int hoursOfParking = 3;
+        LocalDateTime exitDateTime = entryDateTime.plusHours(hoursOfParking);
+
+        //registering first ticket
+        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime));
+        parkingService.processIncomingVehicle();
+
+        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
+        parkingService.processExitingVehicle();
+
+        Ticket firstTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
+
+        //registering second ticket
+        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime));
+        parkingService.processIncomingVehicle();
+
+        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
+        parkingService.processExitingVehicle();
+
+        Ticket secondTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
+
+        assertTrue(secondTicket.getPrice()<firstTicket.getPrice());
     }
 
 }

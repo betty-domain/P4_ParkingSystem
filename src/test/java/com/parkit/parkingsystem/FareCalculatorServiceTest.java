@@ -2,6 +2,7 @@ package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.constants.ParkingType;
+import com.parkit.parkingsystem.dao.TicketDAO;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.FareCalculatorService;
@@ -9,17 +10,23 @@ import com.parkit.parkingsystem.util.DateConvertUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.mockito.Mock;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class FareCalculatorServiceTest {
 
     private static FareCalculatorService fareCalculatorService;
     private Ticket ticket;
+
+    @Mock
+    private TicketDAO ticketDAO;
 
     @BeforeAll
     private static void setUp() {
@@ -198,6 +205,81 @@ public class FareCalculatorServiceTest {
         fareCalculatorService.calculateFare(ticket);
 
         assertEquals(0.5 * Fare.BIKE_RATE_PER_HOUR,ticket.getPrice());
+    }
+
+
+    @Test
+    public void calculateFareForRecurrentCar()
+    {
+        String vehicleRegistrationNumber = "myCar";
+
+        //Initialize first ticket to inform system that vehicle has already come
+        List<Ticket> lstPreviousTickets = new ArrayList<Ticket>() ;
+        Ticket firstTicket = new Ticket();
+        firstTicket.setPrice(10.0);
+        firstTicket.setVehicleRegNumber(vehicleRegistrationNumber);
+        LocalDateTime inLocalDateTime = LocalDateTime.of(2020,5,15,15,0,0);
+        LocalDateTime outLocalDateTime = inLocalDateTime.plusHours(3);
+
+        firstTicket.setOutTime(DateConvertUtil.convertToDate(inLocalDateTime));
+        firstTicket.setInTime(DateConvertUtil.convertToDate(outLocalDateTime));
+        lstPreviousTickets.add(firstTicket);
+
+        //mock getPaidTickets (free tickets are excluded of discount)
+        when (ticketDAO.getPaidTickets(vehicleRegistrationNumber)).thenReturn(lstPreviousTickets);
+
+        Ticket secondTicket = new Ticket();
+        secondTicket.setVehicleRegNumber(vehicleRegistrationNumber);
+        long hoursParkingDuration = 3;
+
+        inLocalDateTime = LocalDateTime.of(2020,5,15,15,0,0);
+        outLocalDateTime = inLocalDateTime.plusHours(hoursParkingDuration);
+        secondTicket.setInTime(DateConvertUtil.convertToDate(inLocalDateTime));
+        secondTicket.setOutTime(DateConvertUtil.convertToDate(outLocalDateTime));
+
+        ParkingSpot currentParkingSpot = new ParkingSpot(1,ParkingType.CAR,false);
+        secondTicket.setParkingSpot(currentParkingSpot);
+
+        fareCalculatorService.calculateFare(secondTicket);
+
+        assertEquals(Fare.DISCOUNT_PERCENT_FOR_REGULAR_USER * Fare.CAR_RATE_PER_HOUR * hoursParkingDuration, secondTicket.getPrice());
+    }
+
+    @Test
+    public void calculateFareForRecurrentBike()
+    {
+        String vehicleRegistrationNumber = "myCar";
+
+        //Initialize first ticket to inform system that vehicle has already come
+        List<Ticket> lstPreviousTickets = new ArrayList<Ticket>() ;
+        Ticket firstTicket = new Ticket();
+        firstTicket.setPrice(10.0);
+        firstTicket.setVehicleRegNumber(vehicleRegistrationNumber);
+        LocalDateTime inLocalDateTime = LocalDateTime.of(2020,5,15,15,0,0);
+        LocalDateTime outLocalDateTime = inLocalDateTime.plusHours(3);
+
+        firstTicket.setOutTime(DateConvertUtil.convertToDate(inLocalDateTime));
+        firstTicket.setInTime(DateConvertUtil.convertToDate(outLocalDateTime));
+        lstPreviousTickets.add(firstTicket);
+
+        //mock getPaidTickets (free tickets are excluded of discount)
+        when (ticketDAO.getPaidTickets(vehicleRegistrationNumber)).thenReturn(lstPreviousTickets);
+
+        Ticket secondTicket = new Ticket();
+        secondTicket.setVehicleRegNumber(vehicleRegistrationNumber);
+        long hoursParkingDuration = 3;
+
+        inLocalDateTime = LocalDateTime.of(2020,5,15,15,0,0);
+        outLocalDateTime = inLocalDateTime.plusHours(hoursParkingDuration);
+        secondTicket.setInTime(DateConvertUtil.convertToDate(inLocalDateTime));
+        secondTicket.setOutTime(DateConvertUtil.convertToDate(outLocalDateTime));
+
+        ParkingSpot currentParkingSpot = new ParkingSpot(1,ParkingType.BIKE,false);
+        secondTicket.setParkingSpot(currentParkingSpot);
+
+        fareCalculatorService.calculateFare(secondTicket);
+
+        assertEquals(Fare.DISCOUNT_PERCENT_FOR_REGULAR_USER * Fare.BIKE_RATE_PER_HOUR * hoursParkingDuration, secondTicket.getPrice());
     }
 
 }
