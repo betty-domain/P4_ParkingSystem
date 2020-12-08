@@ -20,40 +20,29 @@ public class FareCalculatorService {
             throw new IllegalArgumentException("Out time provided is null or incorrect");
         }
 
-        // calculate duration for Current Ticket
-        double hoursBetweenInAndOut = calculateHoursBetweenInAndOut(ticket);
-
-        //apply price rules
-        ticket.setPrice(getTicketPrice(ticket.getParkingSpot().getParkingType(),hoursBetweenInAndOut));
-    }
-
-    /**
-     * Calculate duration for current ticket
-     * @param ticket where in and out Date will be used
-     * @return number of hours with decimal format between in and out date of ticket
-     */
-    private double calculateHoursBetweenInAndOut(Ticket ticket) {
-
         LocalDateTime inLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getInTime());
         LocalDateTime outLocalDatTime = DateConvertUtil.convertToLocalDateTimeViaInstant(ticket.getOutTime());
         Duration durationBetweenInAndOut = Duration.between(inLocalDatTime, outLocalDatTime);
-        return DateConvertUtil.getDecimalHoursFromDuration(durationBetweenInAndOut);
+
+        //calculate and affect ticket price
+        ticket.setPrice(getTicketPrice(ticket.getParkingSpot().getParkingType(), durationBetweenInAndOut ));
     }
 
     /**
      * Get price ticket relative to ParkingType and number of hours of parking
      * @param parkingType type of parking
-     * @param hoursOfParking number of hours of parking (in decimal format ex : 1.5 for 1h30 minutes)
+     * @param parkingDuration parking duration representation
      */
-    private double getTicketPrice(ParkingType parkingType, double hoursOfParking)
+    private double getTicketPrice(ParkingType parkingType, Duration parkingDuration)
     {
-        if (!isFreeParking(hoursOfParking)) {
+        if (!isFreeParking(parkingDuration)) {
+            double nbHoursParkingDuration = DateConvertUtil.getDecimalHoursFromDuration(parkingDuration);
             switch (parkingType) {
                 case CAR:
-                    return hoursOfParking * Fare.CAR_RATE_PER_HOUR;
+                    return nbHoursParkingDuration * Fare.CAR_RATE_PER_HOUR;
 
                 case BIKE:
-                    return hoursOfParking * Fare.BIKE_RATE_PER_HOUR;
+                    return nbHoursParkingDuration * Fare.BIKE_RATE_PER_HOUR;
 
                 default:
                     throw new IllegalArgumentException("Unknown Parking Type");
@@ -67,11 +56,11 @@ public class FareCalculatorService {
 
     /**
      * Check if parking is free relative to parking duration in decimal hours
-     * @param hoursOfParking number of hours of parking (in decimal format ex : 1.5 for 1h30 minutes)
+     * @param duration parking duration object
      * @return true if parking can be free, false otherwise
      */
-    private boolean isFreeParking(double hoursOfParking)
+    private boolean isFreeParking(Duration duration)
     {
-        return hoursOfParking<Fare.NB_HOURS_BEFORE_PAID_PARKING;
+        return duration.toMinutes()<Fare.NB_MINUTES_BEFORE_PAID_PARKING;
     }
 }
