@@ -36,7 +36,7 @@ public class TicketDAOIT {
     private void setUpPerTest() throws Exception {
         dataBasePrepareService.clearDataBaseEntries();
         ticketDAO = new TicketDAO();
-        ticketDAO.dataBaseConfig = dataBaseTestConfig;
+        ticketDAO.setDataBaseConfig(dataBaseTestConfig);
         ticket =  new Ticket();
         ticket.setId(-1);
         ticket.setPrice(10.5);

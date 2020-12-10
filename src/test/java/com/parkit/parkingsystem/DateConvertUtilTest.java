@@ -18,7 +18,7 @@ public class DateConvertUtilTest {
     @BeforeAll
     private static void setUpAllTest()
     {
-        dateConvertUtil = new DateConvertUtil();
+
     }
 
     @Test
@@ -26,7 +26,7 @@ public class DateConvertUtilTest {
         LocalDateTime endDateTime = startDateTime.plusHours(1);
         Duration duration = Duration.between(startDateTime,endDateTime);
 
-        double result =dateConvertUtil.getDecimalHoursFromDuration(duration);
+        double result =DateConvertUtil.getDecimalHoursFromDuration(duration);
         assertEquals( 1.0, result);
     }
 
@@ -36,7 +36,7 @@ public class DateConvertUtilTest {
         LocalDateTime endDateTime = startDateTime.minusHours(1);
         Duration duration = Duration.between(startDateTime,endDateTime);
 
-        double result =dateConvertUtil.getDecimalHoursFromDuration(duration);
+        double result =DateConvertUtil.getDecimalHoursFromDuration(duration);
         assertEquals(-1.0, result );
     }
 
@@ -45,7 +45,7 @@ public class DateConvertUtilTest {
 
         LocalDateTime endDateTime = startDateTime.plusMinutes(45);
         Duration duration = Duration.between(startDateTime,endDateTime);
-        double result =dateConvertUtil.getDecimalHoursFromDuration(duration);
+        double result =DateConvertUtil.getDecimalHoursFromDuration(duration);
         assertEquals(0.75, result );
     }
 
@@ -55,7 +55,7 @@ public class DateConvertUtilTest {
         LocalDateTime endDateTime = startDateTime.plusMinutes(45).plusHours(2);
 
         Duration duration = Duration.between(startDateTime,endDateTime);
-        double result =dateConvertUtil.getDecimalHoursFromDuration(duration);
+        double result =DateConvertUtil.getDecimalHoursFromDuration(duration);
         assertEquals(2.75, result );
     }
 
@@ -65,7 +65,7 @@ public class DateConvertUtilTest {
         LocalDateTime endDateTime = startDateTime.plusMinutes(45).plusHours(2).plusDays(2);
 
         Duration duration = Duration.between(startDateTime,endDateTime);
-        double result =dateConvertUtil.getDecimalHoursFromDuration(duration);
+        double result =DateConvertUtil.getDecimalHoursFromDuration(duration);
         assertEquals(50.75 , result );
     }
 }

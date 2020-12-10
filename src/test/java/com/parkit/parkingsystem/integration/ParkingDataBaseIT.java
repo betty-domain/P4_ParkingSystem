@@ -52,7 +52,6 @@ public class ParkingDataBaseIT {
         parkingSpotDAO.dataBaseConfig = dataBaseTestConfig;
         ticketDAO = new TicketDAO();
         ticketDAO.setDataBaseConfig(dataBaseTestConfig);
-        dateConvertUtil = new DateConvertUtil();
         dataBasePrepareService = new DataBasePrepareService();
     }
 
