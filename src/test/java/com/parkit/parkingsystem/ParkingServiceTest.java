@@ -194,4 +194,42 @@ public class ParkingServiceTest {
         }
     }
 
+    @Test
+    public void processIncomingVehicleTestWithRecurrentVehicle() {
+        try {
+            when(inputReaderUtil.readSelection()).thenReturn(1);
+            when(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR)).thenReturn(1);
+            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
+
+            parkingService.processIncomingVehicle();
+
+            verify(ticketDAO, Mockito.times(1)).getPaidTickets("ABCDEF");
+            //TODO : voir comment vérifier l'affichage du message sur la console de sortie pour dissocier
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to set up test mock objects");
+
+        }
+    }
+
+    @Test
+    public void processIncomingVehicleTestWithRecurrentFreeParkingVehicle() {
+        try {
+            when(inputReaderUtil.readSelection()).thenReturn(1);
+            when(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR)).thenReturn(1);
+            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
+
+            parkingService.processIncomingVehicle();
+
+            verify(ticketDAO, Mockito.times(1)).getPaidTickets("ABCDEF");
+            //TODO : voir comment vérifier l'affichage du message sur la console de sortie pour dissocier
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to set up test mock objects");
+
+        }
+    }
+
 }
