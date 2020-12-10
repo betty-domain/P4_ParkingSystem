@@ -7,14 +7,18 @@ import com.parkit.parkingsystem.integration.service.DataBasePrepareService;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.util.DateConvertUtil;
+import javassist.expr.Instanceof;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -45,9 +49,7 @@ public class TicketDAOIT {
         ticket.setVehicleRegNumber(vehiclePlateNumber);
 
         LocalDateTime inDateTime = LocalDateTime.of(2020,10,10,10,50,15);
-        LocalDateTime outDateTime = inDateTime.plusHours(5);
         ticket.setInTime(DateConvertUtil.convertToDate(inDateTime));
-        ticket.setOutTime(DateConvertUtil.convertToDate(outDateTime));
     }
 
     private void assertEqualsTickets(Ticket expectedTicket, Ticket resultTicket)
@@ -64,6 +66,18 @@ public class TicketDAOIT {
     public void selectTicketWithoutTicketTest(){
         Ticket selectedTicket =  ticketDAO.getTicket("ABCDE");
         assertNull(selectedTicket);
+    }
+
+
+    public void selectTicketDatabaseException(){
+
+        try {
+            ticketDAO.getDataBaseConfig().getConnection().setSchema("");
+            Ticket selectedTicket = ticketDAO.getTicket("ABCDE");
+        }
+        catch   (Exception ex) {
+            assertThat(ex.getSuppressed()[0],instanceOf(SQLException.class));
+        }
     }
 
     @Test
@@ -91,7 +105,7 @@ public class TicketDAOIT {
         savedTicket.setOutTime(DateConvertUtil.convertToDate(outUpdatedTime));
         ticketDAO.updateTicket(savedTicket);
 
-        Ticket selectedTicket = ticketDAO.getTicket(savedTicket.getVehicleRegNumber());
+        Ticket selectedTicket = ticketDAO.getPaidTickets(savedTicket.getVehicleRegNumber()).get(0);
 
         this.assertEqualsTickets(savedTicket,selectedTicket);
     }
