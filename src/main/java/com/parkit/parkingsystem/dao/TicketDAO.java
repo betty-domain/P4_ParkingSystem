@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,15 +32,16 @@ public class TicketDAO {
     
     public boolean saveTicket(Ticket ticket){
 
-        try (Connection con = getDataBaseConfig().getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.SAVE_TICKET)){
+        try (Connection con = dataBaseConfig.getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.SAVE_TICKET)){
             ps.setInt(1,ticket.getParkingSpot().getId());
             ps.setString(2, ticket.getVehicleRegNumber());
             ps.setDouble(3, ticket.getPrice());
             ps.setTimestamp(4, new Timestamp(ticket.getInTime().getTime()));
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
-           return ps.execute();
+            ps.execute();
+            return true;
         }catch (SQLException | ClassNotFoundException ex){
-            logger.error("Error fetching next available slot",ex);
+            logger.error("Error saving ticket",ex);
             return false;
         }
     }
@@ -48,7 +50,7 @@ public class TicketDAO {
 
         Ticket ticket = null;
 
-        try (Connection con = getDataBaseConfig().getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET)){
+        try (Connection con = dataBaseConfig.getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET)){
 
             //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
             ps.setString(1,vehicleRegNumber);
@@ -82,7 +84,7 @@ public class TicketDAO {
             return true;
         }catch (SQLException | ClassNotFoundException ex){
 
-            logger.error("Error saving ticket info",ex);
+            logger.error("Error updating ticket info",ex);
         }
         return false;
     }
@@ -96,7 +98,7 @@ public class TicketDAO {
 
         List<Ticket> listTickets = new ArrayList<>();
         Ticket ticket ;
-        try (Connection con =  getDataBaseConfig().getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.GET_PAID_TICKET)){
+        try (Connection con =  dataBaseConfig.getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.GET_PAID_TICKET)){
             //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
             ps.setString(1,vehicleRegistrationNumber);
             ResultSet rs = ps.executeQuery();
@@ -111,7 +113,7 @@ public class TicketDAO {
                 ticket.setOutTime(rs.getTimestamp(5));
                 listTickets.add(ticket);
             }
-            getDataBaseConfig().closeResultSet(rs);
+            dataBaseConfig.closeResultSet(rs);
         }catch (SQLException | ClassNotFoundException ex){
             logger.error("Error getting Paid Tickets",ex);
         }

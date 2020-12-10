@@ -11,14 +11,6 @@ import java.util.Date;
 public final class DateConvertUtil {
 
     /**
-     * Private Constructor for Utility Class
-     */
-    private DateConvertUtil()
-    {
-
-    }
-
-    /**
      * Convert a Date object into a LocalDateTime Object using the Instant object to convert
      * @param dateToConvert Date to convert
      * @return Converted Date into LocalDateTime

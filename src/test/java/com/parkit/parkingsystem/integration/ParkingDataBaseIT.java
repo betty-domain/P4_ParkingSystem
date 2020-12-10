@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,12 +32,14 @@ public class ParkingDataBaseIT {
 
 
     private static DataBaseTestConfig dataBaseTestConfig = new DataBaseTestConfig();
-    private static DateConvertUtil dateConvertUtil;
+
     private static ParkingSpotDAO parkingSpotDAO;
     private static TicketDAO ticketDAO;
     private static DataBasePrepareService dataBasePrepareService;
 
     private final String vehicleRegistrationNumber = "ABCDEF";
+
+    private LocalDateTime entryDateTime;
 
     private ParkingService parkingService;
 
@@ -57,6 +60,9 @@ public class ParkingDataBaseIT {
 
     @BeforeEach
     private void setUpPerTest() throws Exception {
+        entryDateTime = LocalDateTime.of(2020,1,1,10,10,10);
+        when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(entryDateTime));
+
         when(inputReaderUtilMock.readSelection()).thenReturn(1);
         when(inputReaderUtilMock.readVehicleRegistrationNumber()).thenReturn(vehicleRegistrationNumber);
         dataBasePrepareService.clearDataBaseEntries();
@@ -72,44 +78,38 @@ public class ParkingDataBaseIT {
     @Test
     public void testParkingACar(){
 
-        when(clockUtilMock.getCurrentDate()).thenReturn(new Date());
         parkingService.processIncomingVehicle();
-
-        //TODO : voir deux asserts dans la même méthode
 
         //check that a ticket is actually saved in DB
         Ticket registeredTicket = ticketDAO.getTicket(vehicleRegistrationNumber);
 
-        assertNotNull(registeredTicket);
+
+        assertThat(registeredTicket).isNotNull();
 
         int availableSpot = parkingSpotDAO.getNextAvailableSlot(registeredTicket.getParkingSpot().getParkingType());
         //check Parking table is updated with availability
-        assertNotEquals(availableSpot, registeredTicket.getParkingSpot().getId());
-
+        assertThat(availableSpot).isNotEqualTo(registeredTicket.getParkingSpot().getId());
     }
 
     @Test
     public void testParkingLotExit(){
 
-        LocalDateTime entryDateTime = LocalDateTime.of(2020,1,1,10,10,10);
         int hoursOfParking = 3;
         LocalDateTime exitDateTime = entryDateTime.plusHours(hoursOfParking);
 
         int initialAvailableSpot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime));
+
         parkingService.processIncomingVehicle();
 
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
+        when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(exitDateTime));
         parkingService.processExitingVehicle();
 
         Ticket registeredTicket = ticketDAO.getPaidTickets(vehicleRegistrationNumber).get(0);
         int availableSpot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
-        //TODO : à revoir car plusieurs asserts sur cette méthode
         assertEquals(initialAvailableSpot, availableSpot);
-        assertEquals(Fare.CAR_RATE_PER_HOUR * hoursOfParking,registeredTicket.getPrice());
-        assertEquals(DateConvertUtil.convertToDate(exitDateTime), registeredTicket.getOutTime());
+
     }
 
     @Test
@@ -127,28 +127,27 @@ public class ParkingDataBaseIT {
     @Test
     public void testParkingRecurrentCar(){
 
-        LocalDateTime entryDateTime = LocalDateTime.of(2020,1,1,10,10,10);
+
         int hoursOfParking = 3;
         LocalDateTime exitDateTime = entryDateTime.plusHours(hoursOfParking);
 
         //registering first ticket
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime));
         parkingService.processIncomingVehicle();
 
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime));
+        when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(exitDateTime));
         parkingService.processExitingVehicle();
 
         //registering second ticket
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(entryDateTime.plusMonths(1)));
+        when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(entryDateTime.plusMonths(1)));
         parkingService.processIncomingVehicle();
 
-        when(clockUtilMock.getCurrentDate()).thenReturn(dateConvertUtil.convertToDate(exitDateTime.plusMonths(1)));
+        when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(exitDateTime.plusMonths(1)));
         parkingService.processExitingVehicle();
 
         List<Ticket> listTickets = ticketDAO.getPaidTickets(vehicleRegistrationNumber);
 
         //first ticket must be more expensive than second one because of the applied discount
-        assertTrue(listTickets.get(0).getPrice()>listTickets.get(1).getPrice());
+        assertThat(listTickets.get(0).getPrice()).isGreaterThan(listTickets.get(1).getPrice());
     }
 
 }

@@ -47,8 +47,6 @@ public class ParkingServiceTest {
     private void setUpPerTest() {
         clockUtil = new ClockUtil();
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, clockUtil);
-        //lenient().when(dateConvertUtil.getCurrentDate()).thenReturn(new Date());
-
     }
 
 
@@ -148,8 +146,6 @@ public class ParkingServiceTest {
             parkingService.processIncomingVehicle();
 
             verify(parkingSpotDAO, Mockito.times(1)).updateParking(any(ParkingSpot.class));
-            //TODO : faut-il implémenter une vérification plus précise sur les objets sauvegardés et leurs propriétés ?
-
             verify(ticketDAO, Mockito.times(1)).saveTicket(any(Ticket.class));
         }
         catch (Exception e) {
@@ -204,26 +200,7 @@ public class ParkingServiceTest {
             parkingService.processIncomingVehicle();
 
             verify(ticketDAO, Mockito.times(1)).getPaidTickets("ABCDEF");
-            //TODO : voir comment vérifier l'affichage du message sur la console de sortie pour dissocier
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to set up test mock objects");
 
-        }
-    }
-
-    @Test
-    public void processIncomingVehicleTestWithRecurrentFreeParkingVehicle() {
-        try {
-            when(inputReaderUtil.readSelection()).thenReturn(1);
-            when(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR)).thenReturn(1);
-            when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
-
-            parkingService.processIncomingVehicle();
-
-            verify(ticketDAO, Mockito.times(1)).getPaidTickets("ABCDEF");
-            //TODO : voir comment vérifier l'affichage du message sur la console de sortie pour dissocier
         }
         catch (Exception e) {
             e.printStackTrace();
