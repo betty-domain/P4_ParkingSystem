@@ -48,9 +48,7 @@ public final class DateConvertUtil {
     public static double getDecimalHoursFromDuration(Duration duration)
     {
         long minutes = duration.toMinutes();
-        double partOfHours = (double)minutes / 60.0;
-
-        return partOfHours;
+        return (double)minutes / 60.0;
     }
 
 }

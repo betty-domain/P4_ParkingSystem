@@ -68,18 +68,6 @@ public class TicketDAOIT {
         assertNull(selectedTicket);
     }
 
-
-    public void selectTicketDatabaseException(){
-
-        try {
-            ticketDAO.getDataBaseConfig().getConnection().setSchema("");
-            Ticket selectedTicket = ticketDAO.getTicket("ABCDE");
-        }
-        catch   (Exception ex) {
-            assertThat(ex.getSuppressed()[0],instanceOf(SQLException.class));
-        }
-    }
-
     @Test
     public void saveTicketForExistingParkingSpot(){
         ticketDAO.saveTicket(ticket);

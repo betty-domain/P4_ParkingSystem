@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class TicketDAO {
             ps.setTimestamp(4, new Timestamp(ticket.getInTime().getTime()));
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
            return ps.execute();
-        }catch (Exception ex){
+        }catch (SQLException | ClassNotFoundException ex){
             logger.error("Error fetching next available slot",ex);
             return false;
         }
@@ -46,6 +47,7 @@ public class TicketDAO {
     public Ticket getTicket(String vehicleRegNumber) {
 
         Ticket ticket = null;
+
         try (Connection con = getDataBaseConfig().getConnection(); PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET)){
 
             //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
@@ -61,10 +63,10 @@ public class TicketDAO {
                 ticket.setInTime(rs.getTimestamp(4));
                 ticket.setOutTime(rs.getTimestamp(5));
             }
-            getDataBaseConfig().closeResultSet(rs);
-            getDataBaseConfig().closePreparedStatement(ps);
-        }catch (Exception ex){
-            logger.error("Error fetching next available slot",ex);
+            dataBaseConfig.closeResultSet(rs);
+        }
+        catch (SQLException | ClassNotFoundException ex){
+            logger.error("Error getting Ticket" ,ex);
         }
         return ticket;
     }
@@ -78,7 +80,8 @@ public class TicketDAO {
             ps.setInt(3,ticket.getId());
             ps.execute();
             return true;
-        }catch (Exception ex){
+        }catch (SQLException | ClassNotFoundException ex){
+
             logger.error("Error saving ticket info",ex);
         }
         return false;
@@ -109,8 +112,7 @@ public class TicketDAO {
                 listTickets.add(ticket);
             }
             getDataBaseConfig().closeResultSet(rs);
-            getDataBaseConfig().closePreparedStatement(ps);
-        }catch (Exception ex){
+        }catch (SQLException | ClassNotFoundException ex){
             logger.error("Error getting Paid Tickets",ex);
         }
         return listTickets;
