@@ -20,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,12 +93,13 @@ public class ParkingDataBaseIT {
     @Test
     public void testParkingLotExit(){
 
+        LocalDateTime entryDateTime = LocalDateTime.of(2020,1,1,10,10,10);
         int hoursOfParking = 3;
         LocalDateTime exitDateTime = entryDateTime.plusHours(hoursOfParking);
 
         int initialAvailableSpot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
-
+        when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(entryDateTime));
         parkingService.processIncomingVehicle();
 
         when(clockUtilMock.getCurrentDate()).thenReturn(DateConvertUtil.convertToDate(exitDateTime));
@@ -108,7 +108,11 @@ public class ParkingDataBaseIT {
         Ticket registeredTicket = ticketDAO.getPaidTickets(vehicleRegistrationNumber).get(0);
         int availableSpot = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
 
+        //check parkingSpot is free after exiting
         assertEquals(initialAvailableSpot, availableSpot);
+        //Check fare and outTime are correctly set
+        assertEquals(Fare.CAR_RATE_PER_HOUR * hoursOfParking,registeredTicket.getPrice());
+        assertEquals(DateConvertUtil.convertToDate(exitDateTime), registeredTicket.getOutTime());
 
     }
 
